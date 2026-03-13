@@ -1,9 +1,8 @@
 package store
 
-import "kvshard/internal/commands"
 
 type Store struct {
-	Data map[string]string	
+	Data map[string]string
 }
 
 func NewStore() (s *Store) {
@@ -11,9 +10,4 @@ func NewStore() (s *Store) {
 		Data: make(map[string]string),
 	}
 	return s
-}
-
-
-func (s *Store) Execute(cmd *commands.Command) (*commands.Result, error) {
-	return nil, nil
 }

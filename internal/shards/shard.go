@@ -32,7 +32,6 @@ func (s *Shard) start(ctx context.Context) {
 	}
 }
 
-func (s *Shard) ExecuteCommand(cmd *commands.Command) (*commands.Result, error) {
-	return s.store.Execute(cmd)
+func (s *Shard) Execute(cmd *commands.Command) (*commands.Result, error) {
+	return cmd.Execute(s.store, cmd.Args)
 }
-
