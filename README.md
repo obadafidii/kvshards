@@ -10,8 +10,13 @@ The reason behind building this project is because I am studying database shardi
 
 
 ## Note
-In [dicedb](https://github.com/dicedb/dice-legacy), there are commands that are multi-shards and single-shards. I am going to implement both
+In [dicedb](https://github.com/dicedb/dice-legacy), there are commands that are multi-shards and single-shards. I am going to implement both.
 
+The more I am building this thing, I am getting to see that if you want to see the real effect of the sharded nature
+I have to add an _eviction policy_ system into this cache, to evict keys from each shard based on certain strategies.
+
+
+performance! performance!! performance!!! I need to track performance
 ## Goal
 Measure performance for each number of shard and check the optimal number of shards.
 
