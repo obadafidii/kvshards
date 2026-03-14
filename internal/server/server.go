@@ -51,6 +51,7 @@ func Start(ctx context.Context, logger *slog.Logger, numOfShards int) {
 	}
 }
 
+// TODO: the function needs cleanup
 func (s *server) handleConnection(conn net.Conn) {
 	defer conn.Close()
 
@@ -64,17 +65,18 @@ func (s *server) handleConnection(conn net.Conn) {
 
 		// get the commands and keys
 		msg := strings.Split(line, " ")
-		cmd, key := msg[0], msg[1]
+		cmd := msg[0]
 		command, ok := commands.Registry[strings.ToLower(cmd)]
 		if !ok {
-			s.logger.Warn("unknown command", "command", cmd, "key", key)
-			conn.Write([]byte(kverrors.ErrCommandNotFound.Error()))
+			s.logger.Warn("unknown command", "command", cmd)
+			conn.Write([]byte(kverrors.ErrUnknownCommand.Error()))
 			continue
 		}
 
 		// get the shard responsible for this data
+		key := strings.TrimSpace(msg[1])
 		shard := s.manager.GetShardForKey(key)
-		s.logger.Info("fetched shard", "shard", shard)
+		s.logger.Info("fetched shard", "shard", shard.ID)
 		command.Args = append(command.Args, msg[1:]...)
 
 		// perform the operation on the shard

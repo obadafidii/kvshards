@@ -3,6 +3,7 @@ package store
 import (
 	"kvshard/internal/kverrors"
 	"sync"
+	"time"
 )
 
 // Storage is an interface that defines the operations that can be performed on the store.
@@ -11,6 +12,13 @@ type Storage interface {
 	Put(key, value string) error
 	Delete(key string) error
 	Exists(key string) bool
+}
+
+// Data
+// TODO: improve the Data in Store, so that we can be tracking time to live.
+type Data struct {
+	val any
+	ttl time.Duration
 }
 
 type Store struct {

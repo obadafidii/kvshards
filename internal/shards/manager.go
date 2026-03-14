@@ -45,7 +45,7 @@ func (m *Manager) Run(ctx context.Context) {
 	select {
 	case <-m.signalChan:
 		// if an os signal is received then trigger a shutdown
-		// explanation: os signals are sent to the main process and it
+		// explanation: os signals are sent to the main process, and it
 		// propagates to all child ctxs.
 	case <-ctx.Done():
 		// if the parent ctx is cancelled then trigger a shutdown
