@@ -1,19 +1,16 @@
 package commands
 
 import (
-	"errors"
 	"kvshard/internal/store"
 )
 
-var (
-	ErrInvalidArguments = errors.New("invalid arguments")
-)
-
-type Result struct{}
+type Result struct {
+	Data interface{}
+}
 
 type Command struct {
 	Name        string
 	Args        []string
 	Description string
-	Execute     func(store *store.Store, args []string) (*Result, error)
+	Execute     func(store store.Storage, args []string) (*Result, error)
 }

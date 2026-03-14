@@ -8,13 +8,13 @@ import (
 
 type Shard struct {
 	ID    int
-	store *store.Store
+	Store *store.Store
 }
 
 func NewShard(id int) *Shard {
 	return &Shard{
 		ID:    id,
-		store: store.NewStore(),
+		Store: store.NewStore(id),
 	}
 }
 
@@ -33,5 +33,5 @@ func (s *Shard) start(ctx context.Context) {
 }
 
 func (s *Shard) Execute(cmd *commands.Command) (*commands.Result, error) {
-	return cmd.Execute(s.store, cmd.Args)
+	return cmd.Execute(s.Store, cmd.Args)
 }

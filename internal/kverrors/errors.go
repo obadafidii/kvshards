@@ -8,5 +8,5 @@ var (
 
 	// command errors
 	ErrInvalidArguments = errors.New("invalid arguments")
+	ErrCommandNotFound  = errors.New("command not found")
 )
-

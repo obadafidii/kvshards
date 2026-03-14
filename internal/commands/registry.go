@@ -1,6 +1,6 @@
 package commands
 
-var registry map[string]*Command
+var Registry map[string]*Command
 
 var putCmd = &Command{
 	Name:        "put",
@@ -27,9 +27,9 @@ var existsCmd = &Command{
 }
 
 func init() {
-	registry = make(map[string]*Command)
-	registry["put"] = putCmd
-	registry["get"] = getCmd
-	registry["del"] = delCmd
-	registry["exists"] = existsCmd
+	Registry = make(map[string]*Command)
+	Registry["put"] = putCmd
+	Registry["get"] = getCmd
+	Registry["del"] = delCmd
+	//Registry["exists"] = existsCmd //TODO: to be done later
 }
