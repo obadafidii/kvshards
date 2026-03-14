@@ -23,3 +23,9 @@ Measure performance for each number of shard and check the optimal number of sha
 ## Resources
 1. [DiceDb - Legacy](https://github.com/dicedb/dice-legacy/blob/master/internal/shard/main.go)
 2. [System Design Journal - Sharding](https://github.com/tdadadavid/sd-journal/blob/main/databases/sharding-partitioning.md)
+3. [Sharding nothing architecture-Snowflake example](https://medium.com/@BuildandDebug/shared-disk-vs-shared-nothing-architecture-a-deep-dive-with-snowflake-as-a-case-study-80821098f934)
+4. [The case of shared-nothing architecture - original paper](https://dsf.berkeley.edu/papers/hpts85-nothing.pdf)
+5. [Parallelizing Query Optimization
+   on Shared-Nothing Architectures](https://infoscience.epfl.ch/server/api/core/bitstreams/fcd857f9-f5eb-45e4-94af-9c3761a63231/content)
+6. [Shared architecture spectrum](https://blog.purestorage.com/perspectives/the-storage-architecture-spectrum-why-shared-nothing-means-nothing/?print=pdf)
+7. [Shared-nothing architecture - Aerospike](https://aerospike.com/blog/shared-nothing-architecture/)
