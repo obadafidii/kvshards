@@ -9,4 +9,6 @@ var (
 	// command errors
 	ErrInvalidArguments = errors.New("invalid arguments")
 	ErrUnknownCommand   = errors.New("unknown command")
+	
 )
+

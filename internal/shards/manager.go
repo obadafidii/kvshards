@@ -2,6 +2,7 @@ package shards
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"sync"
@@ -13,13 +14,15 @@ import (
 type Manager struct {
 	shards     []*Shard
 	signalChan chan os.Signal
+
+	logger *slog.Logger
 }
 
-func NewManager(shardCount int) *Manager {
+func NewManager(shardCount int, logger *slog.Logger) *Manager {
 	// create all shards
 	var shards []*Shard
 	for i := range shardCount {
-		shard := NewShard(i)
+		shard := NewShard(i, logger)
 		shards = append(shards, shard)
 	}
 
@@ -27,6 +30,7 @@ func NewManager(shardCount int) *Manager {
 	m := &Manager{
 		shards:     shards,
 		signalChan: make(chan os.Signal, 1),
+		logger:     logger.WithGroup("manager"),
 	}
 
 	return m
@@ -47,10 +51,12 @@ func (m *Manager) Run(ctx context.Context) {
 		// if an os signal is received then trigger a shutdown
 		// explanation: os signals are sent to the main process, and it
 		// propagates to all child ctxs.
+		m.logger.Info("os signal received, shutting down")
 	case <-ctx.Done():
 		// if the parent ctx is cancelled then trigger a shutdown
 		// explanation: something can cancel the parent ctx and it
 		// propagates to all child ctxs.
+		m.logger.Info("parent ctx cancelled, shutting down", "err", ctx.Err())
 		return
 	}
 

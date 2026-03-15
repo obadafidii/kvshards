@@ -2,20 +2,23 @@ package shards
 
 import (
 	"context"
-	"fmt"
 	"kvshard/internal/commands"
 	"kvshard/internal/store"
+	"log/slog"
 )
 
 type Shard struct {
 	ID    int
 	Store *store.Store
+
+	logger *slog.Logger
 }
 
-func NewShard(id int) *Shard {
+func NewShard(id int, logger *slog.Logger) *Shard {
 	return &Shard{
 		ID:    id,
 		Store: store.NewStore(id),
+		logger: logger.WithGroup("shard").With("id", id),
 	}
 }
 
@@ -35,6 +38,7 @@ func (s *Shard) start(ctx context.Context) {
 			// stop shard if parent ctx is cancelled
 			// do cleanup here foreach shard
 			s.cleanup()
+			s.logger.Info("shard stopped", "shard", s.ID, "err", ctx.Err())
 			return
 		// case <-ticker.C:
 		// 	// cleanup expired keys every T durations
@@ -46,9 +50,10 @@ func (s *Shard) start(ctx context.Context) {
 }
 
 func (s *Shard) cleanup() {
-	fmt.Println("not implemented")
+	s.logger.Info("not implemented")
 }
 
 func (s *Shard) Execute(cmd *commands.Command) (*commands.Result, error) {
+	s.logger.Info("executing command", "command", cmd.Name, "args", cmd.Args)
 	return cmd.Execute(s.Store, cmd.Args)
 }

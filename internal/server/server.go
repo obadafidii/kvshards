@@ -28,8 +28,8 @@ func Start(ctx context.Context, logger *slog.Logger, numOfShards int) {
 
 	svr := &server{
 		ctx:        ctx,
-		logger:     logger,
-		manager:    shards.NewManager(numOfShards),
+		logger:     logger.WithGroup("server"),
+		manager:    shards.NewManager(numOfShards, logger),
 		signalChan: make(chan os.Signal, 1),
 	}
 
@@ -69,7 +69,13 @@ func (s *server) handleConnection(conn net.Conn) {
 		command, ok := commands.Registry[strings.ToLower(cmd)]
 		if !ok {
 			s.logger.Warn("unknown command", "command", cmd)
-			conn.Write([]byte(kverrors.ErrUnknownCommand.Error()))
+			conn.Write([]byte(kverrors.ErrUnknownCommand.Error() + "\n"))
+			continue
+		}
+
+		if len(msg) < 2 {
+			s.logger.Warn("wrong command", "command", cmd)
+			conn.Write([]byte(kverrors.ErrUnknownCommand.Error() + "\n"))
 			continue
 		}
 

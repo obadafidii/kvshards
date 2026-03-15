@@ -1,10 +1,13 @@
-run:
+start:
 	go run main.go
 
 build:
 	go build -o kvshard main.go
 
+client:
+	nc localhost 9500
+
 clean:
 	rm -rf kvshard
 
-.PHONY: run build clean
+.PHONY: start build client clean
