@@ -27,7 +27,6 @@ func (s *Shard) start(ctx context.Context) {
 			// stop shard if parent ctx is cancelled
 			// do cleanup here foreach shard
 		default:
-			return
 		}
 	}
 }

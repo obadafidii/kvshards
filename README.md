@@ -29,3 +29,8 @@ Measure performance for each number of shard and check the optimal number of sha
    on Shared-Nothing Architectures](https://infoscience.epfl.ch/server/api/core/bitstreams/fcd857f9-f5eb-45e4-94af-9c3761a63231/content)
 6. [Shared architecture spectrum](https://blog.purestorage.com/perspectives/the-storage-architecture-spectrum-why-shared-nothing-means-nothing/?print=pdf)
 7. [Shared-nothing architecture - Aerospike](https://aerospike.com/blog/shared-nothing-architecture/)
+8. [Concurrency guide](https://tallysolutions.com/technology/concurrent-computing-guide/)
+9. [Concurrency deep-dive](https://nathanpeck.com/concurrency-deep-dive-strategies-for-high-traffic-applications/)
+10. [Mastering concurrency](https://www.harrisonclarke.com/blog/mastering-concurrency-a-guide-for-software-engineers)
+11. [Parallel Database Systems](https://www.cs.cmu.edu/~15721-f24/papers/Parallel_Database_Systems.pdf)
+12. [Development of a Parallel DBMS on the Basis of PostgreSQL](https://ceur-ws.org/Vol-735/paper10.pdf#:~:text=One%20of%20the%20directions%20mentioned%20above%20is,represents%20Post%2D%20greSQL%20with%20embedded%20partitioned%20parallelism.)
