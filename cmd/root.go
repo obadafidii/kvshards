@@ -13,7 +13,6 @@ import (
 var (
 	logger     *slog.Logger
 	noOfShards int
-	verbose    bool
 )
 
 func init() {
@@ -34,7 +33,7 @@ This is a key-value store that is natively sharded, shards can be configurable.`
 		}
 
 		runtime.GOMAXPROCS(noOfShards)
-		logger.Info("kvshard", "version", "0.0.1", "shards", noOfShards, "verbose", verbose)
+		logger.Info("kvshard", "version", "0.0.1", "shards", noOfShards)
 
 		server.Start(context.Background(), logger, noOfShards)
 	},
@@ -42,7 +41,6 @@ This is a key-value store that is natively sharded, shards can be configurable.`
 
 func Execute() {
 	rootCmd.PersistentFlags().IntVarP(&noOfShards, "shards", "s", 0, "Number of shards")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "Enable verbose logging")
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.Error("failed to execute root command", "error", err)
