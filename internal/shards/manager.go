@@ -2,6 +2,7 @@ package shards
 
 import (
 	"context"
+	"kvshard/internal/store/policy"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -22,7 +23,7 @@ func NewManager(shardCount int, logger *slog.Logger) *Manager {
 	// create all shards
 	var shards []*Shard
 	for i := range shardCount {
-		shard := NewShard(i, logger)
+		shard := NewShard(i, policy.TimeBasedPolicy, logger)
 		shards = append(shards, shard)
 	}
 
@@ -64,7 +65,7 @@ func (m *Manager) Run(ctx context.Context) {
 	wg.Wait()
 }
 
-func (m *Manager) GetShardForKey(key string) *Shard {
+func (m *Manager) GetShard(key string) *Shard {
 	// This gets the shard for the particular key, using deterministic hashing
 	// to ensure that the same key always maps to the same shard.
 	return m.shards[xxhash.Sum64String(key)%uint64(len(m.shards))]

@@ -13,11 +13,11 @@ import (
 )
 
 type server struct {
-	manager *shards.Manager
-	ctx     context.Context
-	logger  *slog.Logger
-
+	manager    *shards.Manager
+	ctx        context.Context
 	signalChan chan os.Signal
+
+	logger *slog.Logger
 }
 
 func Start(ctx context.Context, logger *slog.Logger, numOfShards int) {
@@ -36,8 +36,10 @@ func Start(ctx context.Context, logger *slog.Logger, numOfShards int) {
 	for {
 		select {
 		case <-svr.ctx.Done():
+			svr.logger.Info("context cancelled: shutting down server")
 			return
 		case <-svr.signalChan:
+			svr.logger.Info("os signal recieved: shutting down server")
 			return
 		default:
 			conn, aerr := ln.Accept()
@@ -45,27 +47,31 @@ func Start(ctx context.Context, logger *slog.Logger, numOfShards int) {
 				conn.Write([]byte(err.Error()))
 			}
 
-			go svr.handleConnection(conn)
+			go svr.handle(conn)
 		}
 
 	}
 }
 
-// TODO: the function needs cleanup
-func (s *server) handleConnection(conn net.Conn) {
+func (s *server) handle(conn net.Conn) {
 	defer conn.Close()
 
 	scanner := bufio.NewScanner(conn)
 
 	for scanner.Scan() {
 		line := scanner.Text()
+
+		// continue if empty line is sent from client
 		if line == "" {
 			continue
 		}
 
-		// get the commands and keys
-		msg := strings.Split(line, " ")
-		cmd := msg[0]
+		// extract the command and arguements
+		input := strings.Split(line, " ")
+
+		// command is at the first index
+		// ["put|get|del|exists", ...args]
+		cmd := input[0]
 		command, ok := commands.Registry[strings.ToLower(cmd)]
 		if !ok {
 			s.logger.Warn("unknown command", "command", cmd)
@@ -73,30 +79,32 @@ func (s *server) handleConnection(conn net.Conn) {
 			continue
 		}
 
-		if len(msg) < 2 {
-			s.logger.Warn("wrong command", "command", cmd)
-			conn.Write([]byte(kverrors.ErrUnknownCommand.Error() + "\n"))
+		// extract and validate the command arguements
+		command.Args = append(command.Args, input[1:]...)
+		if len(command.Args) != command.MinArgs || len(command.Args) != command.MaxArgs {
+			s.logger.Info("invalid args provided", "min-args-expected", command.MinArgs, "max-args-expected", command.MaxArgs)
+			conn.Write([]byte(kverrors.ErrInvalidArguments.Error() + "\n"))
 			continue
 		}
 
-		// get the shard responsible for this data
-		key := strings.TrimSpace(msg[1])
-		shard := s.manager.GetShardForKey(key)
-		s.logger.Info("fetched shard", "shard", shard.ID)
-		command.Args = append(command.Args, msg[1:]...)
+		// get the shard responsible for this key
+		key := command.Args[1] // key
+		shard := s.manager.GetShard(key)
 
 		// perform the operation on the shard
 		result, err := shard.Execute(command)
-		s.logger.Info("command executed", "result", result, "err", err)
 
-		command.Args = []string{}
+		clear(command.Args)
+
 		if err != nil {
+			s.logger.Info("error executing command", "error", err)
 			conn.Write([]byte(err.Error() + "\n"))
 			continue
 		}
 
 		// send response
 		if result == nil {
+			s.logger.Info("command does not return a result", "command", command.Name)
 			conn.Write([]byte("ok\n"))
 			continue
 		}

@@ -1,66 +1,79 @@
 package store
 
 import (
+	"fmt"
 	"kvshard/internal/kverrors"
-	"sync"
-	"time"
+	"kvshard/internal/store/objects"
 )
 
 // Storage is an interface that defines the operations that can be performed on the store.
 type Storage interface {
-	Get(key string) (string, bool, error)
-	Put(key, value string) error
+	Get(key string) (*objects.Object, bool, error)
+	Put(key string, value *objects.Object) error
+	Size() int
 	Delete(key string) error
 	Exists(key string) bool
 }
 
-// Data
-// TODO: improve the Data in Store, so that we can be tracking time to live.
-type Data struct {
-	val any
-	ttl time.Duration
-}
-
 type Store struct {
 	shardID int
-	Data    *sync.Map
+	Data    map[string]*objects.Object
 }
 
 func NewStore(shardID int) (s *Store) {
 	s = &Store{
 		shardID: shardID,
-		Data:    &sync.Map{},
+		Data:    make(map[string]*objects.Object),
 	}
 	return s
 }
 
+func (s *Store) Size() int {
+	return len(s.Data)
+}
+
 func (s *Store) Exists(key string) bool {
-	if _, ok := s.Data.Load(key); ok {
+	if _, ok := s.Data[key]; ok {
 		return true
 	}
 	return false
 }
 
 func (s *Store) Delete(key string) (err error) {
-	_, ok := s.Data.Load(key)
+	_, ok := s.Data[key]
 	if !ok {
 		return kverrors.ErrKeyNotFound
 	}
-	s.Data.Delete(key)
+	delete(s.Data, key)
 	return err
 }
 
-func (s *Store) Put(key, value string) (err error) {
-	s.Data.Store(key, value)
+func (s *Store) Put(key string, value *objects.Object) (err error) {
+	s.Data[key] = value
 	return err
 }
 
-func (s *Store) Get(key string) (value string, ok bool, err error) {
-	val, ok := s.Data.Load(key)
+func (s *Store) Get(key string) (value *objects.Object, ok bool, err error) {
+	value, ok = s.Data[key]
 	if !ok {
 		err = kverrors.ErrKeyNotFound
 		return value, ok, err
 	}
-	value = val.(string)
 	return value, ok, err
+}
+
+func (s *Store) ExpiredObjects() (expired []*objects.Object) {
+	for id, object := range s.Data {
+		fmt.Printf("id=%s, object=%v", id, object)
+
+		if isExpired(object) {
+			expired = append(expired, object)
+		}
+	}
+
+	return expired
+}
+
+func isExpired(obj *objects.Object) bool {
+	return false
 }

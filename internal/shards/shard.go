@@ -4,56 +4,67 @@ import (
 	"context"
 	"kvshard/internal/commands"
 	"kvshard/internal/store"
+	"kvshard/internal/store/policy"
 	"log/slog"
+	"time"
+)
+
+// TODO: use this to clean up shard once shard is full
+var (
+	MaxKeyPerShard int = 256
 )
 
 type Shard struct {
-	ID    int
-	Store *store.Store
+	id     int
+	store  *store.Store
+	policy policy.EvictionPolicy
 
 	logger *slog.Logger
 }
 
-func NewShard(id int, logger *slog.Logger) *Shard {
+func NewShard(id int, policy policy.EvictionPolicy, logger *slog.Logger) *Shard {
 	return &Shard{
-		ID:    id,
-		Store: store.NewStore(id),
+		id:     id,
+		policy: policy,
+		store:  store.NewStore(id),
 		logger: logger.WithGroup("shard").With("id", id),
 	}
 }
 
 func (s *Shard) start(ctx context.Context) {
-	// each shard will have its own event-loop managing its own state
-	// no shared state between shards.
+	// each shard will have its own event-loop managing its own state no shared state between shards.
+	// following the shared-nothing architecture.
 
-	//TODO: implement keys cleanup when I implement TTL
-	//TODO: clean-up time should be configurable
-	// ticker := time.NewTicker(1 * time.Second)
-	// defer ticker.Stop()
-
+	ticker := time.NewTicker(1 * time.Hour) //TODO: add a configuration layer.
+	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			// stop shard if parent ctx is cancelled
-			// do cleanup here foreach shard
+			// stop shard if parent ctx is cancelled do cleanup here foreach shard
+			s.logger.Info("shard recieved a shutdown request", "shard", s.id, "err", ctx.Err())
 			s.cleanup()
-			s.logger.Info("shard stopped", "shard", s.ID, "err", ctx.Err())
+			s.logger.Info("shard cleanup done", "shard", s.id)
+
 			return
-		// case <-ticker.C:
-		// 	// cleanup expired keys every T durations
-		// 	s.cleanup()
-		default:
-			continue
+		case <-ticker.C:
+			// cleanup expired keys every T durations
+			s.logger.Info("starting periodic cleaning", "shard", s.id, "size", s.store.Size())
+			s.cleanup()
+			s.logger.Info("shard cleaned up", "shard", s.id, "size", s.store.Size())
 		}
 	}
 }
 
 func (s *Shard) cleanup() {
-	s.logger.Info("not implemented")
+	s.logger.Info("policy", s.policy)
+}
+
+func (s *Shard) ID() int {
+	return s.id
 }
 
 func (s *Shard) Execute(cmd *commands.Command) (*commands.Result, error) {
 	s.logger.Info("executing command", "command", cmd.Name, "args", cmd.Args)
-	return cmd.Execute(s.Store, cmd.Args)
+	return cmd.Execute(s.store, cmd.Args)
 }
