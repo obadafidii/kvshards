@@ -20,6 +20,12 @@ performance! performance!! performance!!! I need to track performance
 ## Goal
 Measure performance for each number of shard and check the optimal number of shards.
 
+
+## Features to add
+1. Add `WAL` batching.
+2. Async commit.
+3. WAL Compression.
+
 ## Resources
 1. [DiceDb - Legacy](https://github.com/dicedb/dice-legacy/blob/master/internal/shard/main.go)
 2. [System Design Journal - Sharding](https://github.com/tdadadavid/sd-journal/blob/main/databases/sharding-partitioning.md)
