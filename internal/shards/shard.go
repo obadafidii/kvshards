@@ -35,7 +35,7 @@ func (s *Shard) start(ctx context.Context) {
 	// each shard will have its own event-loop managing its own state no shared state between shards.
 	// following the shared-nothing architecture.
 
-	ticker := time.NewTicker(1 * time.Hour) //TODO: add a configuration layer.
+	ticker := time.NewTicker(5 * time.Minute) //TODO: add a configuration blayer.
 	defer ticker.Stop()
 
 	for {
@@ -57,7 +57,6 @@ func (s *Shard) start(ctx context.Context) {
 }
 
 func (s *Shard) cleanup() {
-	s.logger.Info("policy", s.policy)
 }
 
 func (s *Shard) ID() int {
@@ -65,6 +64,5 @@ func (s *Shard) ID() int {
 }
 
 func (s *Shard) Execute(cmd *commands.Command) (*commands.Result, error) {
-	s.logger.Info("executing command", "command", cmd.Name, "args", cmd.Args)
 	return cmd.Execute(s.store, cmd.Args)
 }

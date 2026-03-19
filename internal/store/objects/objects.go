@@ -15,6 +15,10 @@ func New(id string, val any, ttl int64) *Object {
 	}
 }
 
+func (o *Object) String() string {
+	return o.val.(string)
+}
+
 func (o *Object) TTL() int64 {
 	return o.ttl
 }

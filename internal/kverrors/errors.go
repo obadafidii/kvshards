@@ -9,6 +9,7 @@ var (
 	// command errors
 	ErrInvalidArguments = errors.New("invalid arguments")
 	ErrUnknownCommand   = errors.New("unknown command")
-	
-)
 
+	// system error
+	ErrSystemError = errors.New("system error")
+)

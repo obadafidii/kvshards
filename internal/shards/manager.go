@@ -41,25 +41,14 @@ func (m *Manager) Run(ctx context.Context) {
 	signal.Notify(m.signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	ctx, cancelShard := context.WithCancel(ctx)
-	defer cancelShard()
 	wg := sync.WaitGroup{}
 
 	// start all shards
 	go m.start(ctx, &wg)
 
-	select {
-	case <-m.signalChan:
-		// if an os signal is received then trigger a shutdown
-		// explanation: os signals are sent to the main process, and it
-		// propagates to all child ctxs.
-		m.logger.Info("os signal received, shutting down")
-	case <-ctx.Done():
-		// if the parent ctx is cancelled then trigger a shutdown
-		// explanation: something can cancel the parent ctx and it
-		// propagates to all child ctxs.
-		m.logger.Info("parent ctx cancelled, shutting down", "err", ctx.Err())
-		return
-	}
+	<-ctx.Done()
+	m.logger.Info("parent ctx cancelled, shutting down", "err", ctx.Err())
+	cancelShard()
 
 	// wait for all shards to close before exiting
 	wg.Wait()
