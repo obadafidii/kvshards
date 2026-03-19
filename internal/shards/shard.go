@@ -35,7 +35,7 @@ func (s *Shard) start(ctx context.Context) {
 	// each shard will have its own event-loop managing its own state no shared state between shards.
 	// following the shared-nothing architecture.
 
-	ticker := time.NewTicker(5 * time.Minute) //TODO: add a configuration blayer.
+	ticker := time.NewTicker(5 * time.Second) //TODO: add a configuration blayer.
 	defer ticker.Stop()
 
 	for {
