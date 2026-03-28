@@ -27,10 +27,10 @@ func Start(ctx context.Context, numOfShards int, logger *slog.Logger) {
 	svr := &server{
 		ctx:     ctx,
 		logger:  logger.WithGroup("server"),
-		manager: shards.NewManager(numOfShards, logger),
+		manager: shards.NewManager(ctx, numOfShards, logger),
 	}
 
-	go svr.manager.Run(ctx)
+	go svr.manager.Run()
 
 	go func() {
 		<-ctx.Done()
