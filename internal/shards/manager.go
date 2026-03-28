@@ -13,45 +13,55 @@ import (
 )
 
 type Manager struct {
-	shards     []*Shard
-	signalChan chan os.Signal
+	shards []*Shard
+
+	wg           *sync.WaitGroup
+	signalChan   chan os.Signal
+	ctx          context.Context
+	cancelManger context.CancelFunc
 
 	logger *slog.Logger
 }
 
-func NewManager(shardCount int, logger *slog.Logger) *Manager {
+func NewManager(ctx context.Context, shardCount int, logger *slog.Logger) *Manager {
+
+	ctx, cancelShard := context.WithCancel(ctx)
+	wg := sync.WaitGroup{}
+
 	// create all shards
 	var shards []*Shard
 	for i := range shardCount {
-		shard := NewShard(i, policy.TimeBasedPolicy, logger)
+		shard := NewShard(ctx, i, policy.TimeBasedPolicy, logger)
 		shards = append(shards, shard)
 	}
 
 	// create manager
 	m := &Manager{
-		shards:     shards,
-		signalChan: make(chan os.Signal, 1),
-		logger:     logger.WithGroup("manager"),
+		shards:       shards,
+		ctx:          ctx,
+		wg:           &wg,
+		cancelManger: cancelShard,
+		signalChan:   make(chan os.Signal, 1),
+		logger:       logger.WithGroup("manager"),
 	}
+
+	// register for shutdown signals to gracefully shutdown the manager and its shards
+	signal.Notify(m.signalChan, syscall.SIGINT, syscall.SIGTERM)
 
 	return m
 }
 
-func (m *Manager) Run(ctx context.Context) {
-	signal.Notify(m.signalChan, syscall.SIGINT, syscall.SIGTERM)
-
-	ctx, cancelShard := context.WithCancel(ctx)
-	wg := sync.WaitGroup{}
+func (m *Manager) Run() {
 
 	// start all shards
-	go m.start(ctx, &wg)
+	go m.start(m.ctx, m.wg)
 
-	<-ctx.Done()
-	m.logger.Info("parent ctx cancelled, shutting down", "err", ctx.Err())
-	cancelShard()
+	<-m.ctx.Done()
+	m.logger.Info("parent ctx cancelled, shutting down", "err", m.ctx.Err())
+	m.cancelManger()
 
 	// wait for all shards to close before exiting
-	wg.Wait()
+	m.wg.Wait()
 }
 
 func (m *Manager) GetShard(key string) *Shard {
