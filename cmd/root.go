@@ -12,6 +12,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+//TODO: I want to move the API/communication layer to gRPC instead of nc.
+
 var (
 	logger     *slog.Logger
 	noOfShards int
