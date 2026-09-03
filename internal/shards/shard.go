@@ -4,7 +4,6 @@ import (
 	"context"
 	"kvshard/internal/commands"
 	"kvshard/internal/store"
-	"kvshard/internal/store/policy"
 	"log/slog"
 	"time"
 )
@@ -15,18 +14,16 @@ var (
 )
 
 type Shard struct {
-	id     int
-	store  *store.Store
-	policy policy.EvictionPolicy
+	id    int
+	store *store.Store
 
 	logger *slog.Logger
 }
 
-func NewShard(id int, policy policy.EvictionPolicy, logger *slog.Logger) *Shard {
+func NewShard(ctx context.Context, id int, logger *slog.Logger) *Shard {
 	return &Shard{
 		id:     id,
-		policy: policy,
-		store:  store.NewStore(id),
+		store:  store.NewStore(ctx, id, logger),
 		logger: logger.WithGroup("shard").With("id", id),
 	}
 }
@@ -43,20 +40,30 @@ func (s *Shard) start(ctx context.Context) {
 		case <-ctx.Done():
 			// stop shard if parent ctx is cancelled do cleanup here foreach shard
 			s.logger.Info("shard recieved a shutdown request", "shard", s.id, "err", ctx.Err())
-			s.cleanup()
-			s.logger.Info("shard cleanup done", "shard", s.id)
+			s.cleanup(ctx)
 
 			return
 		case <-ticker.C:
 			// cleanup expired keys every T durations
-			s.logger.Info("starting periodic cleaning", "shard", s.id, "size", s.store.Size())
-			s.cleanup()
-			s.logger.Info("shard cleaned up", "shard", s.id, "size", s.store.Size())
+			go s.deleteStaleKeys()
 		}
 	}
 }
 
-func (s *Shard) cleanup() {
+func (s *Shard) deleteStaleKeys() {
+	s.logger.Info("deleting stale keys", "shard", s.id, "size", s.store.Size())
+
+	s.logger.Info("shard cleaned up", "shard", s.id, "size", s.store.Size())
+}
+
+func (s *Shard) cleanup(ctx context.Context) {
+
+	// during cleanup, we can flush the WAL buffer to the disk and close the WAL file to ensure that all data is persisted before shutting down the shard.
+	if err := s.store.Flush(); err != nil {
+		s.logger.Error("failed to flush WAL buffer during shard cleanup", "shard", s.id, "err", err)
+	}
+
+	s.logger.Info("shard cleanup done", "shard", s.id)
 }
 
 func (s *Shard) ID() int {

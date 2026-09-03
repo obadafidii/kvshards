@@ -2,6 +2,7 @@ package store
 
 import (
 	"fmt"
+	"log/slog"
 	"testing"
 )
 
@@ -18,7 +19,7 @@ func TestStore(t *testing.T) {
 
 	for name, _ := range tests {
 		t.Run(name, func(t *testing.T) {
-			store := NewStore(10)
+			store := NewStore(t.Context(), 10, slog.Default())
 			fmt.Printf("id=%d", store.shardID)
 		})
 	}

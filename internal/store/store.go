@@ -1,8 +1,11 @@
 package store
 
 import (
+	"context"
 	"kvshard/internal/kverrors"
 	"kvshard/internal/store/objects"
+	"kvshard/internal/store/wal"
+	"log/slog"
 	"sync"
 	"sync/atomic"
 )
@@ -12,6 +15,7 @@ type Storage interface {
 	Get(key string) (*objects.Object, bool, error)
 	Put(key string, value *objects.Object) error
 	Size() int64
+	Flush() error
 	Delete(key string) error
 	Exists(key string) bool
 }
@@ -20,14 +24,22 @@ type Store struct {
 	shardID int
 	Data    *sync.Map
 	count   int64
+	wal     *wal.WAL
 }
 
-func NewStore(shardID int) (s *Store) {
+func NewStore(ctx context.Context, shardID int, logger *slog.Logger) (s *Store) {
 	s = &Store{
 		shardID: shardID,
 		Data:    &sync.Map{},
 		count:   0,
 	}
+	storeWal, err := wal.New(ctx, shardID, logger)
+	if err != nil {
+		panic(err)
+	}
+
+	s.wal = storeWal
+
 	return s
 }
 
@@ -53,8 +65,10 @@ func (s *Store) Delete(key string) (err error) {
 }
 
 func (s *Store) Put(key string, value *objects.Object) (err error) {
-	s.Data.Store(key, value)
-	atomic.AddInt64(&s.count, 1)
+	return err
+}
+
+func (s *Store) Flush() (err error) {
 	return err
 }
 
