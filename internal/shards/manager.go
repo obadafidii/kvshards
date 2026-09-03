@@ -2,7 +2,6 @@ package shards
 
 import (
 	"context"
-	"kvshard/internal/store/policy"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -31,7 +30,7 @@ func NewManager(ctx context.Context, shardCount int, logger *slog.Logger) *Manag
 	// create all shards
 	var shards []*Shard
 	for i := range shardCount {
-		shard := NewShard(ctx, i, policy.TimeBasedPolicy, logger)
+		shard := NewShard(ctx, i, logger)
 		shards = append(shards, shard)
 	}
 

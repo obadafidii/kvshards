@@ -1,6 +1,6 @@
 # Monitoring Module
 
-This module is responsible for monitoring the how the shards are performing and utilizing all possible CPU cores capacity.
+This module is responsible for monitoring how the shards are performing and using all possible CPU core capacity.
 
 ## Metrics
 1. Number of shards
