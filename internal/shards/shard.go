@@ -4,7 +4,6 @@ import (
 	"context"
 	"kvshard/internal/commands"
 	"kvshard/internal/store"
-	"kvshard/internal/store/policy"
 	"log/slog"
 	"time"
 )
@@ -15,17 +14,15 @@ var (
 )
 
 type Shard struct {
-	id     int
-	store  *store.Store
-	policy policy.EvictionPolicy
+	id    int
+	store *store.Store
 
 	logger *slog.Logger
 }
 
-func NewShard(ctx context.Context, id int, policy policy.EvictionPolicy, logger *slog.Logger) *Shard {
+func NewShard(ctx context.Context, id int, logger *slog.Logger) *Shard {
 	return &Shard{
 		id:     id,
-		policy: policy,
 		store:  store.NewStore(ctx, id, logger),
 		logger: logger.WithGroup("shard").With("id", id),
 	}
@@ -61,7 +58,7 @@ func (s *Shard) deleteStaleKeys() {
 
 func (s *Shard) cleanup(ctx context.Context) {
 
-	// during clean up, we can flush the WAL buffer to the disk and close the WAL file to ensure that all data is persisted before shutting down the shard.
+	// during cleanup, we can flush the WAL buffer to the disk and close the WAL file to ensure that all data is persisted before shutting down the shard.
 	if err := s.store.Flush(); err != nil {
 		s.logger.Error("failed to flush WAL buffer during shard cleanup", "shard", s.id, "err", err)
 	}

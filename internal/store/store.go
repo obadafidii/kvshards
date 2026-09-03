@@ -32,8 +32,13 @@ func NewStore(ctx context.Context, shardID int, logger *slog.Logger) (s *Store) 
 		shardID: shardID,
 		Data:    &sync.Map{},
 		count:   0,
-		wal:     wal.New(ctx, shardID, logger),
 	}
+	storeWal, err := wal.New(ctx, shardID, logger)
+	if err != nil {
+		panic(err)
+	}
+
+	s.wal = storeWal
 
 	return s
 }
@@ -60,32 +65,10 @@ func (s *Store) Delete(key string) (err error) {
 }
 
 func (s *Store) Put(key string, value *objects.Object) (err error) {
-	// write to WAL before applying the change to the in-memory store to ensure durability and consistency.
-
-	//TODO:
-	// if the WAL write fails, what should I do? we can either return an error to the caller or we can retry the WAL write a certain number of times before giving up.
-	entry := &wal.WALEntry{
-		Command: "put",
-		Key:     key,
-		Value:   value.String(),
-		TTL:     value.TTL(),
-	}
-	if err := s.wal.Append(entry); err != nil {
-		return err
-	}
-
-	s.Data.Store(key, value)
-
-	atomic.AddInt64(&s.count, 1)
 	return err
 }
 
 func (s *Store) Flush() (err error) {
-	// flush the WAL buffer to the disk to ensure that all data is persisted before shutting down the shard.
-	if err := s.wal.Close(); err != nil {
-		return err
-	}
-
 	return err
 }
 
