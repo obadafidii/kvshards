@@ -18,7 +18,10 @@ I have to add an _eviction policy_ system into this cache, to evict keys from ea
 
 performance! performance!! performance!!! I need to track performance
 ## Goal
-- [] Measure performance for each number of shard and check the optimal number of shards. 
+- [] Measure performance for each number of shard and check the optimal number of shards.
+- [] Use claude to build a UI for this project, let it return statistics and several use information
+- [] Host it.
+- [] Check if you can put this go binary in WASM and run the whole thing on the browser, that will be cool right 🤷‍♂️  I really don't lol.
 
 
 ## Current implementation
