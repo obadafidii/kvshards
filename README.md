@@ -18,7 +18,7 @@ I have to add an _eviction policy_ system into this cache, to evict keys from ea
 
 performance! performance!! performance!!! I need to track performance
 ## Goal
-Measure performance for each number of shard and check the optimal number of shards.
+- [] Measure performance for each number of shard and check the optimal number of shards. 
 
 
 ## Current implementation
