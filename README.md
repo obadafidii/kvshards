@@ -15,15 +15,6 @@ In [dicedb](https://github.com/dicedb/dice-legacy), there are commands that are 
 The more I am building this thing, I am getting to see that if you want to see the real effect of the sharded nature
 I have to add an _eviction policy_ system into this cache, to evict keys from each shard based on certain strategies.
 
-
-performance! performance!! performance!!! I need to track performance
-## Goal
-- [] Measure performance for each number of shard and check the optimal number of shards.
-- [] Use claude to build a UI for this project, let it return statistics and several use information
-- [] Host it.
-- [] Check if you can put this go binary in WASM and run the whole thing on the browser, that will be cool right 🤷‍♂️  I really don't lol.
-
-
 ## Current implementation
 
 Keys are deterministically routed across independent shards. Each shard owns an
@@ -55,6 +46,13 @@ The default (`batch-size=1`, synchronous commit, no compression) prioritizes
 durability. Batching and asynchronous commit improve throughput but can lose the
 most recent accepted writes if the process or machine fails before the next
 background commit.
+
+## Goal
+- [] Measure performance for each number of shard and check the optimal number of shards.
+- [] Use claude to build a UI for this project, let it return statistics and several use information
+- [] Host it.
+- [] Check if you can put this go binary in WASM and run the whole thing on the browser, that will be cool right 🤷‍♂️  I really don't lol.
+
 
 ## Resources
 1. [DiceDb - Legacy](https://github.com/dicedb/dice-legacy/blob/master/internal/shard/main.go)
