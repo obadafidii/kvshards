@@ -11,5 +11,5 @@ func exists(store store.Storage, args []string) (res *Result, err error) {
 	if len(args) != 1 {
 		return res, kverrors.ErrInvalidArguments
 	}
-	return res, nil
+	return &Result{Data: store.Exists(args[0])}, nil
 }

@@ -3,9 +3,11 @@ package server
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"kvshard/internal/commands"
 	"kvshard/internal/kverrors"
 	"kvshard/internal/shards"
+	"kvshard/internal/store/wal"
 	"log/slog"
 	"net"
 	"strings"
@@ -18,16 +20,38 @@ type server struct {
 	logger *slog.Logger
 }
 
-func Start(ctx context.Context, numOfShards int, logger *slog.Logger) {
+func Start(ctx context.Context, numOfShards int, logger *slog.Logger) error {
+	return StartWithWALEncoding(ctx, numOfShards, wal.JSONEncoding, logger)
+}
+
+func StartWithWALEncoding(ctx context.Context, numOfShards int, encoding wal.Encoding, logger *slog.Logger) error {
+	config := wal.DefaultConfig()
+	config.Encoding = encoding
+	return StartWithWALConfig(ctx, numOfShards, config, logger)
+}
+
+func StartWithWALConfig(ctx context.Context, numOfShards int, walConfig wal.Config, logger *slog.Logger) error {
+	if logger == nil {
+		logger = slog.Default()
+	}
 	ln, err := net.Listen("tcp", ":9500")
 	if err != nil {
-		panic(err)
+		return fmt.Errorf("listen on port 9500: %w", err)
+	}
+	manager, err := shards.NewManagerWithConfig(ctx, shards.Config{
+		ShardCount: numOfShards,
+		DataDir:    "data",
+		WAL:        walConfig,
+	}, logger)
+	if err != nil {
+		_ = ln.Close()
+		return fmt.Errorf("create shard manager: %w", err)
 	}
 
 	svr := &server{
 		ctx:     ctx,
 		logger:  logger.WithGroup("server"),
-		manager: shards.NewManager(ctx, numOfShards, logger),
+		manager: manager,
 	}
 
 	go svr.manager.Run()
@@ -51,6 +75,7 @@ func Start(ctx context.Context, numOfShards int, logger *slog.Logger) {
 
 		go svr.handle(conn)
 	}
+	return nil
 }
 
 func (s *server) handle(conn net.Conn) {
@@ -61,29 +86,28 @@ func (s *server) handle(conn net.Conn) {
 	for scanner.Scan() {
 		line := scanner.Text()
 
-		// continue if empty line is sent from client
-		if line == "" {
+		// Fields accepts repeated spaces and CRLF, and makes whitespace-only
+		// input safe to ignore.
+		input := strings.Fields(line)
+		if len(input) == 0 {
 			continue
 		}
-
-		// extract the command and arguements
-		input := strings.Split(line, " ")
 
 		// command is at the first index
 		// ["put|get|del|exists", ...args]
 		cmd := input[0]
-		command, ok := commands.Registry[strings.ToLower(cmd)]
+		registered, ok := commands.Registry[strings.ToLower(cmd)]
 		if !ok {
 			s.logger.Warn("unknown command", "command", cmd)
 			conn.Write([]byte(kverrors.ErrUnknownCommand.Error() + "\n"))
 			continue
 		}
 
-		command.Args = []string{}
-
-		// extract and validate the command arguements
-		command.Args = append(command.Args, input[1:]...)
-		if len(command.Args) < command.MinArgs && len(command.Args) > command.MaxArgs {
+		// Commands in the registry are immutable templates. Copying prevents
+		// concurrent clients from overwriting each other's arguments.
+		command := *registered
+		command.Args = append([]string(nil), input[1:]...)
+		if len(command.Args) < command.MinArgs || len(command.Args) > command.MaxArgs {
 			s.logger.Info("invalid args provided", "min-args-expected", command.MinArgs, "max-args-expected", command.MaxArgs, "args-provided", len(command.Args))
 			conn.Write([]byte(kverrors.ErrInvalidArguments.Error() + "\n"))
 			continue
@@ -94,7 +118,7 @@ func (s *server) handle(conn net.Conn) {
 		shard := s.manager.GetShard(key)
 
 		// perform the operation on the shard
-		result, err := shard.Execute(command)
+		result, err := shard.Execute(&command)
 
 		if err != nil {
 			s.logger.Info("error executing command", "error", err)
@@ -108,6 +132,6 @@ func (s *server) handle(conn net.Conn) {
 			continue
 		}
 
-		conn.Write([]byte(result.Data.String() + "\n"))
+		conn.Write([]byte(fmt.Sprint(result.Data) + "\n"))
 	}
 }

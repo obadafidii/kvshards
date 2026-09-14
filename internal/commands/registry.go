@@ -50,5 +50,5 @@ func init() {
 	Registry["put"] = putCmd
 	Registry["get"] = getCmd
 	Registry["del"] = delCmd
-	//Registry["exists"] = existsCmd //TODO: to be done later
+	Registry["exists"] = existsCmd
 }

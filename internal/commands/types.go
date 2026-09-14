@@ -1,7 +1,11 @@
 package commands
 
-import "kvshard/internal/store/objects"
+import (
+	"errors"
+)
+
+var ErrInvalidCommand = errors.New("invalid command")
 
 type Result struct {
-	Data *objects.Object
+	Data any
 }

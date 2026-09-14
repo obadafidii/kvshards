@@ -21,10 +21,37 @@ performance! performance!! performance!!! I need to track performance
 Measure performance for each number of shard and check the optimal number of shards.
 
 
-## Features to add
-1. Add `WAL` batching.
-2. Async commit.
-3. WAL Compression.
+## Current implementation
+
+Keys are deterministically routed across independent shards. Each shard owns an
+in-memory store and a durable, checksummed WAL, restores its state on startup,
+removes expired keys, and shuts down cleanly when the server context is
+cancelled. `PUT`, `GET`, `DEL`, and `EXISTS` are available over the TCP server.
+
+See the [shard design and guarantees](internal/shards/README.md) and the
+[WAL notes](internal/store/wal/README.md) for details.
+
+Run the server with `go run . --shards 4`, then connect to port `9500` with a TCP
+client such as `nc localhost 9500`. JSON WAL records are the default; select the
+binary codec with `go run . --shards 4 --wal-encoding binary`.
+
+The WAL also supports batching, asynchronous commits, gzip compression,
+checksummed records, and automatic log compaction. For example:
+
+```sh
+go run . --shards 4 \
+  --wal-encoding binary \
+  --wal-compression gzip \
+  --wal-batch-size 64 \
+  --wal-batch-interval 25ms \
+  --wal-async-commit \
+  --wal-compaction-threshold 10000
+```
+
+The default (`batch-size=1`, synchronous commit, no compression) prioritizes
+durability. Batching and asynchronous commit improve throughput but can lose the
+most recent accepted writes if the process or machine fails before the next
+background commit.
 
 ## Resources
 1. [DiceDb - Legacy](https://github.com/dicedb/dice-legacy/blob/master/internal/shard/main.go)

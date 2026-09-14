@@ -1,5 +1,10 @@
 package objects
 
+import (
+	"fmt"
+	"time"
+)
+
 // Object: improve the Data in Store, so that we can be tracking time to live.
 type Object struct {
 	id  string // this the key
@@ -16,13 +21,19 @@ func New(id string, val any, ttl int64) *Object {
 }
 
 func (o *Object) String() string {
-	return o.val.(string)
+	return fmt.Sprint(o.val)
 }
+
+func (o *Object) ID() string { return o.id }
+
+func (o *Object) Value() any { return o.val }
 
 func (o *Object) TTL() int64 {
 	return o.ttl
 }
 
-// func (o *Object) IsExpired() bool {
-// 	return time.Now().After(o.ttl)
-// }
+// IsExpired reports whether the object's absolute Unix expiry has passed.
+// A non-positive TTL means that the object does not expire.
+func (o *Object) IsExpired(now time.Time) bool {
+	return o.ttl > 0 && now.Unix() >= o.ttl
+}
